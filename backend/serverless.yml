@@ -52,6 +52,15 @@ custom:
         version: '1.0.0'
         title: Todos API
         description: Serverless todo application
+    models:
+      - name: CreateTodo
+        contentType: application/json
+        schema: ${file(models/create-todo-model.json)}
+      - name: UpdateTodo
+        contentType: application/json
+        schema: ${file(models/update-todo-model.json)}
+   
+        
 
 functions:
 
@@ -86,7 +95,6 @@ functions:
   # To validate incoming HTTP requests, we have provided the request schemas in function definition below. 
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
-    tracing: true
     events:
       - http:
           method: post
@@ -94,7 +102,7 @@ functions:
           cors: true
           authorizer: Auth
           request:
-            schemas:
+            schema:
               application/json: ${file(models/create-todo-model.json)}
     iamRoleStatements:
       - Effect: Allow
@@ -122,7 +130,6 @@ functions:
           - dynamodb:GetItem
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-
   # TODO: Configure this function
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
   DeleteTodo:
@@ -163,6 +170,16 @@ functions:
 
 resources:
   Resources:
+    RequestBodyValidator:
+        Type: AWS::ApiGateway::RequestValidator
+        Properties:
+          Name: 'request-body-validator'
+          RestApiId:
+            Ref: ApiGatewayRestApi
+          ValidateRequestBody: true
+          ValidateRequestParameters: false   
+
+
     # Add necessary AWS resources. You will need at least the following AWS resources
     # TODO: Fill the properties
     # Feel free to change the names as you like. 
@@ -203,7 +220,7 @@ resources:
               - AttributeName: createdAt
                 KeyType: RANGE
             Projection:
-              ProjectionType: ALL
+              ProjectionType: ALL     
         
     # TODO: Complete the bucket properties below. 
     # Do not forget to add the CorsConfiguration propoerty
